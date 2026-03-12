@@ -286,9 +286,7 @@ async function toggleProduct(p) {
 }
 
 async function fetchProducts() {
-  const res = await api
-    .get("/admin/products", { params: { limit: 100 } })
-    .catch(() => api.get("/products", { params: { limit: 100 } }));
+  const res = await api.get("/products", { params: { limit: 100 } });
   products.value = res.data.products || res.data;
 }
 
