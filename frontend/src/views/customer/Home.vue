@@ -94,6 +94,8 @@
         </div>
       </div>
     </div>
+
+    <Footer />
   </div>
 </template>
 
@@ -103,6 +105,7 @@ import Navbar from "@/components/common/Navbar.vue";
 import ProductCard from "@/components/product/ProductCard.vue";
 import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
 import AdSlot from "@/components/common/AdSlot.vue";
+import Footer from "@/components/common/Footer.vue";
 import api from "@/services/api";
 
 const categories = ref([]);

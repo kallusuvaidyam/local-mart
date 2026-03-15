@@ -8,6 +8,8 @@ const routes = [
   { path: '/register', component: () => import('@/views/auth/Register.vue') },
   { path: '/products', component: () => import('@/views/customer/ProductList.vue') },
   { path: '/products/:slug', component: () => import('@/views/customer/ProductDetail.vue') },
+  { path: '/privacy-policy', component: () => import('@/views/PrivacyPolicy.vue') },
+  { path: '/terms', component: () => import('@/views/TermsOfService.vue') },
 
   // Protected - Customer
   {
