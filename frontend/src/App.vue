@@ -17,8 +17,7 @@ const cart = useCartStore()
 onMounted(async () => {
   if (auth.isLoggedIn) {
     try {
-      await auth.fetchMe()
-      await cart.fetchCart()
+      await Promise.all([auth.fetchMe(), cart.fetchCart()])
     } catch {}
   }
 })

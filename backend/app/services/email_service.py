@@ -29,7 +29,7 @@ def send_email(to: str, subject: str, html_body: str) -> bool:
 
         # SSL connection — timeout 15 seconds
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
-            server.set_debuglevel(1)          # terminal mein SMTP log dikhega
+            server.set_debuglevel(0)
             server.login(settings.MAIL_FROM, settings.MAIL_PASSWORD)
             server.sendmail(settings.MAIL_FROM, to, msg.as_string())
 

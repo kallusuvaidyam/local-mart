@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str
     RAZORPAY_KEY_SECRET: str
 
+    # Return window (days after delivery within which return is allowed)
+    RETURN_WINDOW_DAYS: int = 2
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",")]

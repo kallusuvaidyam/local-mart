@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, products, cart, orders, blocks, addresses, reviews, admin, delivery, payments
+from app.api.v1 import auth, products, cart, orders, blocks, addresses, reviews, admin, delivery, payments, returns
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -14,3 +14,4 @@ api_router.include_router(reviews.router)
 api_router.include_router(admin.router)
 api_router.include_router(delivery.router)
 api_router.include_router(payments.router)
+api_router.include_router(returns.router)

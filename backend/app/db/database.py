@@ -27,5 +27,5 @@ def get_db():
 
 def create_tables():
     """Create all tables. Called on startup."""
-    from app.models import user, address, block, delivery_zone, category, product, cart, order, review  # noqa
+    from app.models import user, address, block, delivery_zone, category, product, cart, order, review, return_request  # noqa
     Base.metadata.create_all(bind=engine)

@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
-from sqlalchemy import func, cast, Date, distinct
+from sqlalchemy import func, cast, case, Date, distinct
 from typing import Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from app.db.database import get_db
 from app.core.dependencies import get_current_admin
 from app.models.order import Order, OrderItem
+from app.models.return_request import ReturnRequest
 from app.models.product import Product
 from app.models.user import User
-from app.schemas.schemas import OrderStatusUpdate
+from app.schemas.schemas import OrderStatusUpdate, ReturnStatusUpdate
 from app.services.email_service import send_status_update_to_customer
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -21,6 +22,14 @@ VALID_TRANSITIONS = {
     "cancelled":        [],
 }
 NOTIFY_STATUSES = ["confirmed", "out_for_delivery", "delivered", "cancelled"]
+
+RETURN_TRANSITIONS = {
+    "return_requested": ["return_approved", "return_rejected"],
+    "return_approved":  ["return_picked_up"],
+    "return_picked_up": ["return_completed"],
+    "return_rejected":  [],
+    "return_completed": [],
+}
 
 
 # ── DASHBOARD (enhanced) ─────────────────────────────────
@@ -51,21 +60,27 @@ def dashboard(db: Session = Depends(get_db), _=Depends(get_current_admin)):
         User.created_at >= seven_days_ago
     ).count()
 
-    # Orders last 7 days (day-wise)
+    # Orders last 7 days (single query instead of 14)
+    seven_days_start = date.today() - timedelta(days=6)
+    day_rows = (
+        db.query(
+            cast(Order.ordered_at, Date).label("day"),
+            func.count(Order.id).label("count"),
+            func.sum(case((Order.status != "cancelled", Order.total_amount), else_=0)).label("revenue"),
+        )
+        .filter(cast(Order.ordered_at, Date) >= seven_days_start)
+        .group_by(cast(Order.ordered_at, Date))
+        .all()
+    )
+    day_map = {row.day: {"orders": row.count, "revenue": float(row.revenue or 0)} for row in day_rows}
     orders_by_day = []
     for i in range(6, -1, -1):
         d = date.today() - timedelta(days=i)
-        count = db.query(func.count(Order.id)).filter(
-            cast(Order.ordered_at, Date) == d
-        ).scalar()
-        revenue = db.query(func.sum(Order.total_amount)).filter(
-            cast(Order.ordered_at, Date) == d,
-            Order.status != "cancelled"
-        ).scalar()
+        info = day_map.get(d, {"orders": 0, "revenue": 0})
         orders_by_day.append({
             "date":    d.strftime("%d %b"),
-            "orders":  count or 0,
-            "revenue": float(revenue or 0),
+            "orders":  info["orders"],
+            "revenue": info["revenue"],
         })
 
     # Top products
@@ -147,14 +162,34 @@ def get_all_users(
     total = q.count()
     users = q.order_by(User.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
 
+    user_ids = [u.id for u in users]
+
+    # Single aggregated query instead of 3 queries per user (N+1 fix)
+    order_stats = {}
+    if user_ids:
+        stats_rows = (
+            db.query(
+                Order.user_id,
+                func.count(Order.id).label("order_count"),
+                func.sum(
+                    case((Order.status == "delivered", Order.total_amount), else_=0)
+                ).label("total_spent"),
+                func.max(Order.ordered_at).label("last_order_at"),
+            )
+            .filter(Order.user_id.in_(user_ids))
+            .group_by(Order.user_id)
+            .all()
+        )
+        for row in stats_rows:
+            order_stats[row.user_id] = {
+                "order_count":  row.order_count or 0,
+                "total_spent":  float(row.total_spent or 0),
+                "last_order_at": row.last_order_at.isoformat() if row.last_order_at else None,
+            }
+
     result = []
     for u in users:
-        order_count   = db.query(func.count(Order.id)).filter(Order.user_id == u.id).scalar()
-        total_spent   = db.query(func.sum(Order.total_amount)).filter(
-            Order.user_id == u.id, Order.status == "delivered"
-        ).scalar()
-        last_order    = db.query(Order).filter(Order.user_id == u.id).order_by(Order.ordered_at.desc()).first()
-
+        s = order_stats.get(u.id, {})
         result.append({
             "id":           u.id,
             "name":         u.name,
@@ -162,9 +197,9 @@ def get_all_users(
             "phone":        u.phone,
             "is_active":    u.is_active,
             "joined_at":    u.created_at.isoformat() if u.created_at else None,
-            "order_count":  order_count or 0,
-            "total_spent":  float(total_spent or 0),
-            "last_order_at": last_order.ordered_at.isoformat() if last_order and last_order.ordered_at else None,
+            "order_count":  s.get("order_count", 0),
+            "total_spent":  s.get("total_spent", 0),
+            "last_order_at": s.get("last_order_at"),
         })
 
     return {"total": total, "users": result}
@@ -301,6 +336,8 @@ def update_order_status(
 
     old_status   = order.status
     order.status = data.status
+    if data.status == "delivered":
+        order.delivered_at = datetime.now(timezone.utc)
     db.commit()
 
     if data.status in NOTIFY_STATUSES:
@@ -318,4 +355,67 @@ def update_order_status(
     return {
         "message":      f"Order #{order_id}: {old_status} → {data.status}",
         "allowed_next": VALID_TRANSITIONS.get(data.status, []),
+    }
+
+
+# ── RETURNS LIST ──────────────────────────────────────────
+@router.get("/returns")
+def get_all_returns(
+    status: Optional[str] = Query(None),
+    page:   int = Query(1, ge=1),
+    limit:  int = Query(20),
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    q = db.query(ReturnRequest).order_by(ReturnRequest.created_at.desc())
+    if status:
+        q = q.filter(ReturnRequest.status == status)
+    total   = q.count()
+    returns = q.offset((page - 1) * limit).limit(limit).all()
+
+    result = []
+    for r in returns:
+        order = r.order
+        result.append({
+            "id":           r.id,
+            "order_id":     r.order_id,
+            "user_name":    r.user.name if r.user else "",
+            "user_phone":   r.user.phone if r.user else "",
+            "reason":       r.reason,
+            "status":       r.status,
+            "admin_note":   r.admin_note,
+            "total_amount": float(order.total_amount) if order else 0,
+            "created_at":   r.created_at.isoformat() if r.created_at else None,
+            "allowed_next": RETURN_TRANSITIONS.get(r.status, []),
+        })
+    return {"total": total, "returns": result}
+
+
+# ── RETURN STATUS UPDATE ──────────────────────────────────
+@router.patch("/returns/{return_id}/status")
+def update_return_status(
+    return_id: int,
+    data: ReturnStatusUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    ret = db.query(ReturnRequest).filter(ReturnRequest.id == return_id).first()
+    if not ret:
+        raise HTTPException(404, "Return request not found")
+
+    allowed = RETURN_TRANSITIONS.get(ret.status, [])
+    if data.status not in allowed:
+        if not allowed:
+            raise HTTPException(400, f"Return is in final state: '{ret.status}'.")
+        raise HTTPException(400, f"Cannot move '{ret.status}' → '{data.status}'. Allowed: {allowed}")
+
+    old_status = ret.status
+    ret.status = data.status
+    if data.admin_note is not None:
+        ret.admin_note = data.admin_note
+    db.commit()
+
+    return {
+        "message":      f"Return #{return_id}: {old_status} → {data.status}",
+        "allowed_next": RETURN_TRANSITIONS.get(data.status, []),
     }

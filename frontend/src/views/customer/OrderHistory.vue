@@ -10,20 +10,24 @@
         <router-link to="/products" class="btn-primary">Start Shopping</router-link>
       </div>
       <div v-else class="space-y-4">
-        <div v-for="order in orders" :key="order.id" class="card p-4 hover:shadow-md transition">
-          <div class="flex items-start justify-between mb-2">
-            <div>
-              <p class="font-bold text-gray-900">Order #{{ order.id }}</p>
-              <p class="text-xs text-gray-500">{{ formatDate(order.ordered_at) }}</p>
+        <template v-for="(order, idx) in orders" :key="order.id">
+          <div class="card p-4 hover:shadow-md transition">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <p class="font-bold text-gray-900">Order #{{ order.id }}</p>
+                <p class="text-xs text-gray-500">{{ formatDate(order.ordered_at) }}</p>
+              </div>
+              <span :class="`badge-${order.status}`">{{ formatStatus(order.status) }}</span>
             </div>
-            <span :class="`badge-${order.status}`">{{ formatStatus(order.status) }}</span>
+            <p class="text-sm text-gray-600 mb-2">{{ order.item_count || order.items?.length }} item(s) · ₹{{ order.total_amount }}</p>
+            <div class="flex justify-between items-center">
+              <p class="text-xs text-gray-500 truncate">{{ order.snap_block_name }}</p>
+              <router-link :to="`/orders/${order.id}`" class="text-sm text-blue-600 font-medium hover:underline">View Details →</router-link>
+            </div>
           </div>
-          <p class="text-sm text-gray-600 mb-2">{{ order.item_count || order.items?.length }} item(s) · ₹{{ order.total_amount }}</p>
-          <div class="flex justify-between items-center">
-            <p class="text-xs text-gray-500 truncate">{{ order.snap_block_name }}</p>
-            <router-link :to="`/orders/${order.id}`" class="text-sm text-blue-600 font-medium hover:underline">View Details →</router-link>
-          </div>
-        </div>
+          <!-- Ad Slot 7: In-feed ad after every 3 orders -->
+          <AdSlot v-if="(idx + 1) % 3 === 0 && idx < orders.length - 1" :label="`Order Feed Ad — ${Math.floor((idx+1)/3)}`" height="70px" />
+        </template>
       </div>
     </div>
   </div>
@@ -33,6 +37,7 @@
 import { ref, onMounted } from 'vue'
 import Navbar from '@/components/common/Navbar.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import AdSlot from '@/components/common/AdSlot.vue'
 import api from '@/services/api'
 
 const orders = ref([])

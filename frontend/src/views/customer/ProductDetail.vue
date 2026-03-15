@@ -125,7 +125,10 @@
         </div>
       </div>
 
-      <div v-if="product" class="mt-10">
+      <!-- Ad Slot 4: Before Reviews -->
+      <AdSlot v-if="product" label="Product Detail — 300×250" height="120px" wrap-class="mt-8" />
+
+      <div v-if="product" class="mt-6">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Customer Reviews</h2>
         <div v-if="reviews.reviews?.length === 0" class="text-gray-500 text-sm">
           No reviews yet. Be the first!
@@ -150,6 +153,9 @@
         </div>
       </div>
 
+      <!-- Ad Slot 5: After Reviews (Sponsored Products area) -->
+      <AdSlot v-if="product" label="Sponsored Products — 728×90" height="100px" wrap-class="mt-8" />
+
       <div v-if="!loading && !product" class="text-center py-16 text-gray-500">
         <p class="text-4xl mb-3">😕</p>
         <p>Product not found.</p>
@@ -166,6 +172,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Navbar from "@/components/common/Navbar.vue";
 import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
+import AdSlot from "@/components/common/AdSlot.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useCartStore } from "@/stores/cart";
 import { useToastStore } from "@/stores/toast";

@@ -16,7 +16,7 @@ class Order(Base):
         nullable=False,
     )
     payment_method = Column(
-        Enum("cod", name="payment_method_enum"),
+        Enum("cod", "online", name="payment_method_enum"),
         default="cod"
     )
     subtotal = Column(Numeric(10, 2), nullable=False)
@@ -26,12 +26,16 @@ class Order(Base):
     snap_block_name = Column(String(100))
     snap_zone_name = Column(String(100))
     notes = Column(Text)
+    razorpay_order_id = Column(String(100))
+    razorpay_payment_id = Column(String(100))
     ordered_at = Column(DateTime, server_default=func.now())
+    delivered_at = Column(DateTime)
     updated_at = Column(DateTime, onupdate=func.now())
 
     user = relationship("User", back_populates="orders")
     address = relationship("Address", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    return_request = relationship("ReturnRequest", back_populates="order", uselist=False)
 
 
 class OrderItem(Base):

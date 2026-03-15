@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.config import settings
 from app.models.cart import CartItem
 from app.models.order import Order, OrderItem
 from app.models.address import Address
@@ -26,6 +27,17 @@ logger = logging.getLogger(__name__)
 # ✅ user_id optional rakha — list view mein bhi kaam kare, detail mein bhi
 def serialize_order(order: Order, reviewed_product_ids: set = None) -> dict:
     reviewed_product_ids = reviewed_product_ids or set()
+    ret = order.return_request
+    return_data = None
+    if ret:
+        return_data = {
+            "id": ret.id,
+            "reason": ret.reason,
+            "status": ret.status,
+            "admin_note": ret.admin_note,
+            "created_at": ret.created_at.isoformat() if ret.created_at else None,
+            "updated_at": ret.updated_at.isoformat() if ret.updated_at else None,
+        }
     return {
         "id": order.id,
         "status": order.status,
@@ -38,6 +50,9 @@ def serialize_order(order: Order, reviewed_product_ids: set = None) -> dict:
         "snap_zone_name": order.snap_zone_name,
         "notes": order.notes,
         "ordered_at": order.ordered_at.isoformat() if order.ordered_at else None,
+        "delivered_at": order.delivered_at.isoformat() if order.delivered_at else None,
+        "return_window_days": settings.RETURN_WINDOW_DAYS,
+        "return_request": return_data,
         "items": [
             {
                 "id": i.id,
@@ -47,7 +62,7 @@ def serialize_order(order: Order, reviewed_product_ids: set = None) -> dict:
                 "unit_price": float(i.unit_price),
                 "quantity": i.quantity,
                 "line_total": float(i.line_total),
-                "already_reviewed": i.product_id in reviewed_product_ids,  # ✅
+                "already_reviewed": i.product_id in reviewed_product_ids,
             }
             for i in order.items
         ],

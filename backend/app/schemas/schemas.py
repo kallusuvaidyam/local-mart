@@ -305,6 +305,29 @@ class ReviewOut(BaseModel):
         from_attributes = True
 
 
+# ─── RETURNS ─────────────────────────────────────────────
+class ReturnRequestCreate(BaseModel):
+    reason: str
+
+
+class ReturnStatusUpdate(BaseModel):
+    status: str
+    admin_note: Optional[str] = None
+
+
+class ReturnRequestOut(BaseModel):
+    id: int
+    order_id: int
+    reason: str
+    status: str
+    admin_note: Optional[str]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
 # ─── DELIVERY ────────────────────────────────────────────
 class DeliveryCalcOut(BaseModel):
     is_deliverable: bool

@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id             INT NOT NULL,
     address_id          INT NOT NULL,
     status              ENUM('pending','confirmed','out_for_delivery','delivered','cancelled') DEFAULT 'pending',
-    payment_method      ENUM('cod') DEFAULT 'cod',
+    payment_method      ENUM('cod','online') DEFAULT 'cod',
     subtotal            DECIMAL(10,2) NOT NULL,
     delivery_charge     DECIMAL(8,2) NOT NULL,
     total_amount        DECIMAL(10,2) NOT NULL,
@@ -140,7 +140,10 @@ CREATE TABLE IF NOT EXISTS orders (
     snap_block_name     VARCHAR(100),
     snap_zone_name      VARCHAR(100),
     notes               TEXT,
+    razorpay_order_id   VARCHAR(100),
+    razorpay_payment_id VARCHAR(100),
     ordered_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    delivered_at        DATETIME,
     updated_at          DATETIME ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_user_id (user_id),
     INDEX idx_status (status),
@@ -212,6 +215,24 @@ INSERT IGNORE INTO categories (name, slug) VALUES
 ('Snacks', 'snacks'),
 ('Household', 'household'),
 ('Personal Care', 'personal-care');
+
+-- ─────────────────────────────────────────────────────────
+-- 12. ORDER RETURNS
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS order_returns (
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    order_id    INT NOT NULL,
+    user_id     INT NOT NULL,
+    reason      TEXT NOT NULL,
+    status      ENUM('return_requested','return_approved','return_rejected','return_picked_up','return_completed') DEFAULT 'return_requested',
+    admin_note  TEXT,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_order_return (order_id),
+    INDEX idx_order_id (order_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status)
+);
 
 -- ─────────────────────────────────────────────────────────
 -- USEFUL QUERIES FOR ADMIN

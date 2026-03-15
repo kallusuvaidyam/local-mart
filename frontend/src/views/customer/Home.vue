@@ -25,6 +25,11 @@
       </div>
     </div>
 
+    <!-- Ad Slot 1: After Hero -->
+    <div class="max-w-5xl mx-auto px-4 pt-6">
+      <AdSlot label="Home Top Banner — 728×90" height="90px" wrap-class="" />
+    </div>
+
     <!-- Categories -->
     <div class="max-w-7xl mx-auto px-4 py-10">
       <h2 class="text-xl font-bold text-gray-900 mb-5">Shop by Category</h2>
@@ -72,6 +77,11 @@
       </div>
     </div>
 
+    <!-- Ad Slot 2: Before Why Us -->
+    <div class="max-w-5xl mx-auto px-4 pb-4">
+      <AdSlot label="Home Mid Banner — 728×90" height="90px" wrap-class="" />
+    </div>
+
     <!-- Why us -->
     <div class="bg-white border-t border-gray-100 py-10">
       <div
@@ -92,6 +102,7 @@ import { ref, onMounted } from "vue";
 import Navbar from "@/components/common/Navbar.vue";
 import ProductCard from "@/components/product/ProductCard.vue";
 import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
+import AdSlot from "@/components/common/AdSlot.vue";
 import api from "@/services/api";
 
 const categories = ref([]);

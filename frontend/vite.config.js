@@ -8,4 +8,14 @@ export default defineConfig({
     alias: { '@': resolve(__dirname, 'src') },
   },
   server: { port: 5173 },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'pinia'],
+          'vendor-axios': ['axios'],
+        },
+      },
+    },
+  },
 })
