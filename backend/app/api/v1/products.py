@@ -134,28 +134,36 @@ async def create_product(
     db: Session = Depends(get_db),
     _=Depends(get_current_admin),
 ):
-    slug = slugify(name)
-    counter = 0
-    base_slug = slug
-    while db.query(Product).filter(Product.slug == slug).first():
-        counter += 1
-        slug = f"{base_slug}-{counter}"
+    try:
+        slug = slugify(name)
+        counter = 0
+        base_slug = slug
+        while db.query(Product).filter(Product.slug == slug).first():
+            counter += 1
+            slug = f"{base_slug}-{counter}"
 
-    image_url = None
-    if image:
-        contents = await image.read()
-        image_url = upload_image(contents, folder="products")
+        image_url = None
+        if image:
+            contents = await image.read()
+            image_url = upload_image(contents, folder="products")
 
-    product = Product(
-        name=name, slug=slug, category_id=category_id, price=price,
-        description=description, mrp=mrp, stock_qty=stock_qty,
-        unit=unit, is_featured=is_featured, return_policy=return_policy,
-        image_url=image_url,
-    )
-    db.add(product)
-    db.commit()
-    db.refresh(product)
-    return product
+        product = Product(
+            name=name, slug=slug, category_id=category_id, price=price,
+            description=description, mrp=mrp, stock_qty=stock_qty,
+            unit=unit, is_featured=is_featured, return_policy=return_policy,
+            image_url=image_url,
+        )
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        return product
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{product_id}", response_model=ProductOut)
