@@ -30,10 +30,14 @@ def seed():
             phone="9999999999",
             password_hash=hash_password("admin123"),
             role="admin",
+            email_verified=True,
         )
         db.add(admin)
         print("✅ Admin created: admin@localmart.com / admin123")
     else:
+        if not admin.email_verified:
+            admin.email_verified = True
+            print("✅ Admin email_verified set to True")
         print("ℹ️  Admin already exists")
 
     # Blocks

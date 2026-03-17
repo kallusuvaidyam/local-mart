@@ -81,7 +81,11 @@ async function doLogin() {
     await cart.fetchCart();
     router.push(auth.isAdmin ? "/admin" : "/");
   } catch (e) {
-    error.value = e.response?.data?.detail || "Invalid email or password";
+    if (e.response?.status === 403) {
+      error.value = "Email not verified. Please check your Gmail inbox for the OTP.";
+    } else {
+      error.value = e.response?.data?.detail || "Invalid email or password";
+    }
   } finally {
     loading.value = false;
   }

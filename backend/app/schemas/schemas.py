@@ -11,6 +11,13 @@ class RegisterRequest(BaseModel):
     phone: str
     password: str
 
+    @field_validator("email")
+    @classmethod
+    def gmail_only(cls, v):
+        if not v.lower().endswith("@gmail.com"):
+            raise ValueError("Only Gmail addresses are allowed")
+        return v.lower()
+
     @field_validator("password")
     @classmethod
     def password_min_length(cls, v):
@@ -25,6 +32,11 @@ class RegisterRequest(BaseModel):
         if not digits.isdigit() or len(digits) < 10:
             raise ValueError("Invalid phone number")
         return v
+
+
+class VerifyEmailRequest(BaseModel):
+    email: EmailStr
+    otp: str
 
 
 class LoginRequest(BaseModel):

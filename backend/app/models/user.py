@@ -18,6 +18,9 @@ class User(Base):
         nullable=False
     )
     is_active = Column(Boolean, default=True)
+    email_verified = Column(Boolean, default=False)
+    verify_otp = Column(String(6), nullable=True)
+    verify_otp_expiry = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
