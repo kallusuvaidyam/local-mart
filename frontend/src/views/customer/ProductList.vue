@@ -167,10 +167,11 @@
           >
             <template v-for="(p, idx) in products" :key="p.id">
               <ProductCard :product="p" />
-              <!-- Ad Slot 3: In-feed ad after every 6 products -->
+              <!-- Ad Slot 3: In-feed ad after every 6 products (uncomment when ads are ready)
               <div v-if="(idx + 1) % 6 === 0 && idx < products.length - 1" class="col-span-2 sm:col-span-2 lg:col-span-3">
                 <AdSlot :label="`In-Feed Ad — Row ${Math.floor((idx+1)/6)}`" height="80px" wrap-class="my-1" />
               </div>
+              -->
             </template>
           </div>
 

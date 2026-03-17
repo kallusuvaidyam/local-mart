@@ -32,12 +32,21 @@ def get_categories(show_all: bool = False, db: Session = Depends(get_db)):
 
 
 @cat_router.post("", response_model=CategoryOut, status_code=201)
-def create_category(data: CategoryCreate, db: Session = Depends(get_db), _=Depends(get_current_admin)):
-    slug = slugify(data.name)
+async def create_category(
+    name: str = Form(...),
+    image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    slug = slugify(name)
     existing = db.query(Category).filter(Category.slug == slug).first()
     if existing:
         raise HTTPException(400, "Category with this name already exists")
-    cat = Category(name=data.name, slug=slug, image_url=data.image_url)
+    image_url = None
+    if image:
+        contents = await image.read()
+        image_url = upload_image(contents, folder="categories")
+    cat = Category(name=name, slug=slug, image_url=image_url)
     db.add(cat)
     db.commit()
     db.refresh(cat)
@@ -45,18 +54,28 @@ def create_category(data: CategoryCreate, db: Session = Depends(get_db), _=Depen
 
 
 @cat_router.put("/{cat_id}", response_model=CategoryOut)
-def update_category(cat_id: int, data: CategoryUpdate, db: Session = Depends(get_db), _=Depends(get_current_admin)):
+async def update_category(
+    cat_id: int,
+    name: Optional[str] = Form(None),
+    is_active: Optional[bool] = Form(None),
+    remove_image: Optional[bool] = Form(False),
+    image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
     cat = db.query(Category).filter(Category.id == cat_id).first()
     if not cat:
         raise HTTPException(404, "Category not found")
-    if data.name is not None:
-        cat.name = data.name
-        cat.slug = slugify(data.name)
-    if data.image_url is not None:
-        # empty string clears the image, any other value sets it
-        cat.image_url = data.image_url if data.image_url != "" else None
-    if data.is_active is not None:
-        cat.is_active = data.is_active
+    if name is not None:
+        cat.name = name
+        cat.slug = slugify(name)
+    if image:
+        contents = await image.read()
+        cat.image_url = upload_image(contents, folder="categories")
+    elif remove_image:
+        cat.image_url = None
+    if is_active is not None:
+        cat.is_active = is_active
     db.commit()
     db.refresh(cat)
     return cat

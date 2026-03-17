@@ -19,10 +19,10 @@
 
 <script setup>
 defineProps({
-  label: { type: String, default: 'Banner' },
-  height: { type: String, default: '90px' },
-  wrapClass: { type: String, default: 'my-4' },
-  containerClass: { type: String, default: '' },
+  label: { type: String, default: "Banner" },
+  height: { type: String, default: "90px" },
+  wrapClass: { type: String, default: "my-4" },
+  containerClass: { type: String, default: "" },
 });
 </script>
 

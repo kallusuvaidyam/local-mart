@@ -125,8 +125,9 @@
         </div>
       </div>
 
-      <!-- Ad Slot 4: Before Reviews -->
+      <!-- Ad Slot 4: Before Reviews (uncomment when ads are ready)
       <AdSlot v-if="product" label="Product Detail — 300×250" height="120px" wrap-class="mt-8" />
+      -->
 
       <div v-if="product" class="mt-6">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Customer Reviews</h2>
@@ -153,8 +154,9 @@
         </div>
       </div>
 
-      <!-- Ad Slot 5: After Reviews (Sponsored Products area) -->
+      <!-- Ad Slot 5: After Reviews (uncomment when ads are ready)
       <AdSlot v-if="product" label="Sponsored Products — 728×90" height="100px" wrap-class="mt-8" />
+      -->
 
       <div v-if="!loading && !product" class="text-center py-16 text-gray-500">
         <p class="text-4xl mb-3">😕</p>

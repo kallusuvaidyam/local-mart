@@ -171,8 +171,9 @@
           </div>
         </div>
 
-        <!-- Ad Slot 6: Between Items & Delivery -->
+        <!-- Ad Slot 6: Between Items & Delivery (uncomment when ads are ready)
         <AdSlot label="Order Detail — Banner" height="80px" />
+        -->
 
         <!-- Delivery Address -->
         <div class="card p-5">

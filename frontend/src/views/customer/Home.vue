@@ -25,10 +25,11 @@
       </div>
     </div>
 
-    <!-- Ad Slot 1: After Hero -->
+    <!-- Ad Slot 1: After Hero (uncomment when ads are ready)
     <div class="max-w-5xl mx-auto px-4 pt-6">
       <AdSlot label="Home Top Banner — 728×90" height="90px" wrap-class="" />
     </div>
+    -->
 
     <!-- Categories -->
     <div class="max-w-7xl mx-auto px-4 py-10">
@@ -47,7 +48,14 @@
           :to="`/products?category=${cat.slug}`"
           class="flex flex-col items-center gap-2 p-3 bg-white rounded-xl border border-gray-100 hover:border-blue-300 hover:shadow-sm transition text-center"
         >
-          <span class="text-2xl">{{ getCatEmoji(cat.name) }}</span>
+          <img
+            v-if="cat.image_url"
+            :src="cat.image_url"
+            :alt="cat.name"
+            class="w-10 h-10 object-cover rounded-lg"
+            @error="e => e.target.style.display='none'"
+          />
+          <span v-else class="text-2xl">{{ getCatEmoji(cat.name) }}</span>
           <span class="text-xs font-medium text-gray-700 leading-tight">{{
             cat.name
           }}</span>
@@ -77,10 +85,11 @@
       </div>
     </div>
 
-    <!-- Ad Slot 2: Before Why Us -->
+    <!-- Ad Slot 2: Before Why Us (uncomment when ads are ready)
     <div class="max-w-5xl mx-auto px-4 pb-4">
       <AdSlot label="Home Mid Banner — 728×90" height="90px" wrap-class="" />
     </div>
+    -->
 
     <!-- Why us -->
     <div class="bg-white border-t border-gray-100 py-10">

@@ -25,8 +25,9 @@
               <router-link :to="`/orders/${order.id}`" class="text-sm text-blue-600 font-medium hover:underline">View Details →</router-link>
             </div>
           </div>
-          <!-- Ad Slot 7: In-feed ad after every 3 orders -->
+          <!-- Ad Slot 7: In-feed ad after every 3 orders (uncomment when ads are ready)
           <AdSlot v-if="(idx + 1) % 3 === 0 && idx < orders.length - 1" :label="`Order Feed Ad — ${Math.floor((idx+1)/3)}`" height="70px" />
+          -->
         </template>
       </div>
     </div>

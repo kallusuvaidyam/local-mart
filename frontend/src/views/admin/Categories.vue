@@ -14,10 +14,11 @@
           <div class="space-y-3">
             <input v-model="form.name" placeholder="Category Name *" required class="input-field" />
             <div>
-              <input v-model="form.image_url" placeholder="Image URL (optional)" class="input-field" />
-              <div v-if="form.image_url" class="mt-2 flex items-center gap-2">
-                <img :src="form.image_url" class="w-12 h-12 object-cover rounded" @error="e => e.target.style.display='none'" />
-                <button @click="form.image_url = ''" class="text-xs text-red-500 hover:underline">✕ Remove image</button>
+              <label class="text-sm font-medium text-gray-700 block mb-1">Category Image</label>
+              <input type="file" accept="image/*" @change="onFileChange" class="text-sm" />
+              <div v-if="imagePreview || (editing && editing.image_url && !form.remove_image)" class="mt-2 flex items-center gap-2">
+                <img :src="imagePreview || editing?.image_url" class="w-12 h-12 object-cover rounded" />
+                <button @click="removeImage" class="text-xs text-red-500 hover:underline">Remove image</button>
               </div>
             </div>
           </div>
@@ -90,7 +91,24 @@ const toggling = ref(null)
 const formError = ref('')
 const editing = ref(null)
 const showInactive = ref(false)
-const form = ref({ name: '', image_url: '' })
+const form = ref({ name: '', remove_image: false })
+const imageFile = ref(null)
+const imagePreview = ref(null)
+
+function onFileChange(e) {
+  const file = e.target.files[0]
+  if (file) {
+    imageFile.value = file
+    imagePreview.value = URL.createObjectURL(file)
+    form.value.remove_image = false
+  }
+}
+
+function removeImage() {
+  imageFile.value = null
+  imagePreview.value = null
+  form.value.remove_image = true
+}
 
 async function fetchCategories() {
   loading.value = true
@@ -104,7 +122,9 @@ async function fetchCategories() {
 
 function openForm(cat = null) {
   editing.value = cat
-  form.value = cat ? { name: cat.name, image_url: cat.image_url || '' } : { name: '', image_url: '' }
+  form.value = cat ? { name: cat.name, remove_image: false } : { name: '', remove_image: false }
+  imageFile.value = null
+  imagePreview.value = null
   formError.value = ''
   showForm.value = true
 }
@@ -114,9 +134,15 @@ async function saveCategory() {
   saving.value = true
   formError.value = ''
   try {
-    const payload = { name: form.value.name.trim(), image_url: form.value.image_url || '' }
-    if (editing.value) await api.put(`/categories/${editing.value.id}`, payload)
-    else await api.post('/categories', payload)
+    const fd = new FormData()
+    fd.append('name', form.value.name.trim())
+    if (imageFile.value) fd.append('image', imageFile.value)
+    if (editing.value) {
+      fd.append('remove_image', form.value.remove_image)
+      await api.put(`/categories/${editing.value.id}`, fd)
+    } else {
+      await api.post('/categories', fd)
+    }
     toast.success(editing.value ? 'Category updated!' : 'Category added!')
     showForm.value = false
     await fetchCategories()
@@ -128,7 +154,9 @@ async function saveCategory() {
 async function toggleCat(cat) {
   toggling.value = cat.id
   try {
-    await api.put(`/categories/${cat.id}`, { is_active: !cat.is_active })
+    const fd = new FormData()
+    fd.append('is_active', !cat.is_active)
+    await api.put(`/categories/${cat.id}`, fd)
     toast.success(cat.is_active ? `"${cat.name}" deactivated` : `"${cat.name}" activated`)
     await fetchCategories()
   } catch {
