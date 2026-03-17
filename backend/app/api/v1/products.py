@@ -129,6 +129,7 @@ async def create_product(
     stock_qty: int = Form(0),
     unit: Optional[str] = Form(None),
     is_featured: bool = Form(False),
+    return_policy: Optional[int] = Form(2),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     _=Depends(get_current_admin),
@@ -148,7 +149,8 @@ async def create_product(
     product = Product(
         name=name, slug=slug, category_id=category_id, price=price,
         description=description, mrp=mrp, stock_qty=stock_qty,
-        unit=unit, is_featured=is_featured, image_url=image_url,
+        unit=unit, is_featured=is_featured, return_policy=return_policy,
+        image_url=image_url,
     )
     db.add(product)
     db.commit()
@@ -168,6 +170,7 @@ async def update_product(
     unit: Optional[str] = Form(None),
     is_active: Optional[bool] = Form(None),
     is_featured: Optional[bool] = Form(None),
+    return_policy: Optional[int] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     _=Depends(get_current_admin),
@@ -184,6 +187,7 @@ async def update_product(
     if stock_qty is not None: product.stock_qty = stock_qty
     if unit is not None: product.unit = unit
     if is_active is not None: product.is_active = is_active
+    if return_policy is not None: product.return_policy = return_policy
     if is_featured is not None: product.is_featured = is_featured
     if image:
         contents = await image.read()
