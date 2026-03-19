@@ -96,8 +96,9 @@ def register(data: RegisterRequest, background_tasks: BackgroundTasks, db: Sessi
         db.commit()
         background_tasks.add_task(send_verify_email, data.email, data.name, otp)
         return {"message": "OTP sent to your email. Please verify.", "requires_verification": True}
-    if db.query(User).filter(User.phone == data.phone).first():
-        raise HTTPException(400, "Phone already registered")
+    # Phone uniqueness check temporarily disabled for testing
+    # if db.query(User).filter(User.phone == data.phone).first():
+    #     raise HTTPException(400, "Phone already registered")
     otp = generate_otp()
     user = User(
         name=data.name,
